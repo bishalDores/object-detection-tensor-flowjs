@@ -101,38 +101,47 @@ const ObjectDetector = () => {
   `;
   return (
     <div className="container detector_wrapper mt-4">
-      <h3>Please select an image.</h3>
-      <div className="img_wrapper">
-        {img ? (
-          <>
-            <img src={img} ref={imageRef} />
-            {!isEmptyPredictions &&
-              predictions.map((prediction, idx) => {
-                return (
-                  <TargetBox
-                    key={idx}
-                    x={prediction.bbox[0]}
-                    y={prediction.bbox[1]}
-                    width={prediction.bbox[2]}
-                    height={prediction.bbox[3]}
-                    classType={prediction.class}
-                    score={prediction.score * 100}
-                  />
-                );
-              })}
-          </>
-        ) : (
-          <img src="https://via.placeholder.com/1140x700" />
-        )}
+      <div className="row">
+        <div className="col-12">
+          <h3>Please select an image.</h3>
+          <div className="img_wrapper">
+            {img ? (
+              <>
+                <img src={img} ref={imageRef} />
+                {!isEmptyPredictions &&
+                  predictions.map((prediction, idx) => {
+                    return (
+                      <TargetBox
+                        key={idx}
+                        x={prediction.bbox[0]}
+                        y={prediction.bbox[1]}
+                        width={prediction.bbox[2]}
+                        height={prediction.bbox[3]}
+                        classType={prediction.class}
+                        score={prediction.score * 100}
+                      />
+                    );
+                  })}
+              </>
+            ) : (
+              <img src="https://via.placeholder.com/1140x700" />
+            )}
+          </div>
+          <input
+            type={"file"}
+            hidden
+            ref={fileInputRef}
+            onChange={imageHandler}
+          />
+          <button
+            className="btn btn-primary mt-4"
+            onClick={openFilePicker}
+            disabled={loading}
+          >
+            {loading ? "please wait..." : "Select File"}
+          </button>
+        </div>
       </div>
-      <input type={"file"} hidden ref={fileInputRef} onChange={imageHandler} />
-      <button
-        className="btn btn-primary mt-4"
-        onClick={openFilePicker}
-        disabled={loading}
-      >
-        {loading ? "please wait..." : "Select File"}
-      </button>
     </div>
   );
 };

@@ -1,18 +1,38 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import React from "react";
 import Cars from "../assets/images/cars.jpg";
 import "@tensorflow/tfjs-backend-cpu";
 import "@tensorflow/tfjs-backend-webgl";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import CanvasElement from "./CanvasElement";
 
 const ObjectDetector = () => {
   const [img, setImg] = useState();
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [newImg, setNewImg] = useState(null);
+  const [step, setStep] = useState(1);
+  const [dimensions, setDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
   const fileInputRef = useRef();
   const imageRef = useRef();
+  const containerRef = useRef();
   const isEmptyPredictions = !predictions || predictions.length === 0;
+
+  useEffect(() => {
+    if (
+      containerRef.current?.offsetHeight &&
+      containerRef.current?.offsetWidth
+    ) {
+      setDimensions({
+        width: containerRef.current.offsetWidth,
+        height: containerRef.current.offsetHeight,
+      });
+    }
+  }, []);
 
   const openFilePicker = () => {
     if (fileInputRef.current) fileInputRef.current.click();
@@ -44,6 +64,7 @@ const ObjectDetector = () => {
     const predictions = await model.detect(imageElement, 6);
     const newPredictions = normalizePredictions(predictions, imgSize);
     setPredictions(newPredictions);
+    setStep((prev) => prev + 1);
   };
 
   const readImageData = (file) => {
@@ -73,6 +94,8 @@ const ObjectDetector = () => {
         height: imageElement.height,
       };
 
+      setNewImg(imageElement);
+
       await detectObjectsOnImage(imageElement, imgSize);
       setLoading(false);
     };
@@ -100,46 +123,61 @@ const ObjectDetector = () => {
     }
   `;
   return (
-    <div className="container detector_wrapper mt-4">
+    <div className="container detector_wrapper mt-4" ref={containerRef}>
       <div className="row">
         <div className="col-12">
-          <h3>Please select an image.</h3>
-          <div className="img_wrapper">
-            {img ? (
-              <>
-                <img src={img} ref={imageRef} />
-                {!isEmptyPredictions &&
-                  predictions.map((prediction, idx) => {
-                    return (
-                      <TargetBox
-                        key={idx}
-                        x={prediction.bbox[0]}
-                        y={prediction.bbox[1]}
-                        width={prediction.bbox[2]}
-                        height={prediction.bbox[3]}
-                        classType={prediction.class}
-                        score={prediction.score * 100}
-                      />
-                    );
-                  })}
-              </>
-            ) : (
-              <img src="https://via.placeholder.com/1140x700" />
-            )}
-          </div>
-          <input
-            type={"file"}
-            hidden
-            ref={fileInputRef}
-            onChange={imageHandler}
-          />
-          <button
-            className="btn btn-primary mt-4"
-            onClick={openFilePicker}
-            disabled={loading}
-          >
-            {loading ? "please wait..." : "Select File"}
-          </button>
+          {(() => {
+            switch (step) {
+              case 1:
+                return (
+                  <>
+                    <h3>Please select an image.</h3>
+                    <div className="img_wrapper">
+                      {img ? (
+                        <>
+                          <img src={img} ref={imageRef} />
+                          {!isEmptyPredictions &&
+                            predictions.map((prediction, idx) => {
+                              return (
+                                <TargetBox
+                                  key={idx}
+                                  x={prediction.bbox[0]}
+                                  y={prediction.bbox[1]}
+                                  width={prediction.bbox[2]}
+                                  height={prediction.bbox[3]}
+                                  classType={prediction.class}
+                                  score={prediction.score * 100}
+                                />
+                              );
+                            })}
+                        </>
+                      ) : (
+                        <img src="https://via.placeholder.com/1140x700" />
+                      )}
+                    </div>
+                    <input
+                      type={"file"}
+                      hidden
+                      ref={fileInputRef}
+                      onChange={imageHandler}
+                    />
+                    <button
+                      className="btn btn-primary mt-4"
+                      onClick={openFilePicker}
+                      disabled={loading}
+                    >
+                      {loading ? "please wait..." : "Select File"}
+                    </button>
+                  </>
+                );
+              case 2:
+                return (
+                  <CanvasElement imgSrc={newImg} dimensions={dimensions} />
+                );
+              default:
+                return null;
+            }
+          })()}
         </div>
       </div>
     </div>
